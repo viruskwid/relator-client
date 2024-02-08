@@ -1,8 +1,20 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import './Auth.css'
+import { auth, provider } from '../firebase'
+import { signInWithPopup } from 'firebase/auth'
+
 function Auth() {
- 
+  const [value,setValue] = useState('')
+ const handleClick =()=>{
+  signInWithPopup(auth,provider).then((data)=>{
+  setValue(data.user.email)
+  localStorage.setItem("email",data.user.email)
+  })
+ }
+ useEffect(()=>{
+  setValue(localStorage.getItem('email'))
+ })
   return (
     <>
     <div style={{height:'auto',overflowX:'hidden'}} className='w-auto bg-dark'>
@@ -78,7 +90,7 @@ function Auth() {
       <p className="p line text-light">Or With</p>
 
       <div className="flex-row d-flex  justify-content-center  align-items-center ">
-        <button className="btn1 google shadow text-black">
+        {value?<Dashboard/>:<button onClick={handleClick} className="btn1 google shadow text-black">
           <svg version="1.1" width="20" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style={{ enableBackground: 'new 0 0 512 512' }} xmlSpace="preserve">
             <path style={{ fill: '#FBBB00' }} d="M113.47,309.408L95.648,375.94l-65.139,1.378C11.042,341.211,0,299.9,0,256
         c0-42.451,10.324-82.483,28.624-117.732h0.014l57.992,10.632l25.404,57.644c-5.317,15.501-8.215,32.141-8.215,49.456
@@ -94,7 +106,7 @@ function Auth() {
         C318.115,0,375.068,22.126,419.404,58.936z"></path>
           </svg>
          Sign in with Google
-        </button>
+        </button>}
       </div>
     </form>
 

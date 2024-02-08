@@ -9,7 +9,7 @@ function Footer() {
       <Link to={'/home'} className='text-decoration-none text-light fs-4'> <i class="fa-solid fa-house-laptop me-2 fs-2"></i>RELATOR</Link>
       <br />
         <span style={{fontSize:'14px',pointerEvents:'none'}} className='mt-5 text-light '>
-       <span className='text-success fw-bold fs-6'> Kerala's n</span> No 1 property selling app, revolutionizes real estate transactions with user-friendly features, 
+       <span className='text-success fw-bold fs-6'> Kerala's</span> No 1 property selling app, revolutionizes real estate transactions with user-friendly features, 
 
         </span><br />
         <span className='text-success' style={{fontSize:'14px',pointerEvents:'none'}}>Currently v5.3.2</span>
