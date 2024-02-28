@@ -1,71 +1,145 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../components/Footer'
 import MyProperties from '../components/MyProperties'
+import Header from '../components/Header'
+import { UpdateUserProfileAPI, getUserPostAPI } from '../../Service/allAPIs'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import uploadProfile from '../assets/user.jpg'
+import { SERVER_URL } from '../../Service/ServerUrl'
 
 function Profile() {
-  const  navigate = useNavigate()
-  const handleLogOut= ()=>{
-      navigate('/')
+  const navigate = useNavigate()
+  const [myProperty,setMyProperty]=useState()
+  const [editData,setEditData]=useState(false)
+  const [userName , setUserName]=useState("")
+  const [existingImage,setExistingImage]=useState("")
+  const [userData,setUserData]=useState({
+   username:JSON.parse(sessionStorage.getItem("userDetails")).username , email:JSON.parse(sessionStorage.getItem("userDetails")).email , password:JSON.parse(sessionStorage.getItem("userDetails")).password ,  phone:JSON.parse(sessionStorage.getItem("userDetails")).phone, location:JSON.parse(sessionStorage.getItem("userDetails")).location , profileImage:JSON.parse(sessionStorage.getItem("userDetails")).profileImage
+  })
+  console.log(userData);
+   const [preview,setPreview]=useState() 
+   useEffect(()=>{
+    if (sessionStorage.getItem("userDetails")) {
+      const userDetails = JSON.parse(sessionStorage.getItem("userDetails"))
+      setUserData({username:userDetails.username,email:userDetails.email,password:userDetails.password,phone:userDetails.phone,location:userDetails.location,profileImage:""})
+      setExistingImage(userDetails.profileImage)
+      console.log(userDetails);
+   }
+   },[sessionStorage.getItem("userDetails")])  
+   useEffect(()=>{
+    if(userData.profileImage.type=="image/png" || userData.profileImage.type=="image/jpg" || userData.profileImage.type=="image/jpeg" ){
+          console.log("generate image url");
+          setPreview(URL.createObjectURL(userData.profileImage))
+
+    }else{
+      console.log("invalid fromat");
+      setUserData({...userData,profileImage:""})
+      setPreview("")
+    }
+
+  },[userData.profileImage])
+  console.log(existingImage);
+ const edit =()=>{
+  setEditData(true)
+ }
+
+ const handleProfileUpdate = async()=>{
+  const {username,email,password,phone,location,profileImage} = userData
+  if (!username ||!location ||!profileImage) {
+   toast.warn("please fill the fields Completely")
+   
+  }else{
+   //proceed to api call
+   const reqBody = new FormData()
+   reqBody.append("username",username)
+   reqBody.append("email",email)
+   reqBody.append("password",password)
+   reqBody.append("phone",phone)
+   reqBody.append("location",location)
+   preview?reqBody.append("profileImage",profileImage):reqBody.append("profileImage",existingImage)
+ const token = sessionStorage.getItem("token")
+ if (token) {
+   const reqHeader={
+     "Content-Type":preview?"multipart/form-data":"application/json",
+     "Authorization":`Bearer ${token}`
+   }
+   //api call
+   try{
+     const result = await UpdateUserProfileAPI(reqBody,reqHeader)
+     if (result.status==200) {
+      console.log(result.data);
+       sessionStorage.setItem("userDetails" ,JSON.stringify(result.data))
+       toast.success("Your Profile Successfully updated")
+    setTimeout(() => {
+      navigate('/home')
+    }, 2000);
+     }else{
+       console.log(result);
+     }
+   }catch(err){
+        console.log(err);
+   }
+ }
+
   }
+ }
+ const myPost = async()=>{
+      const result = await getUserPostAPI(JSON.parse(sessionStorage.getItem("userDetails")).phone)
+      if (result.status==200) {
+        console.log(result.data);
+        setMyProperty(result.data)
+      }else{
+        console.log(result.response);
+      }
+ }
+ useEffect(()=>{
+    myPost()
+ },[])
   return (
     <>
-    <div style={{height:'auto'}} className='bg-dark w-100 '>
-    <nav class="navbar navbar-expand-lg bg-black" data-bs-theme="dark">
-  <div class="container">
-  <Link to={'/home'} className='text-decoration-none text-light fs-4 navbar-brand'> <i class="fa-solid fa-house-laptop me-2 fs-2"></i>R<span className='text-success fw-semibold '>E</span>LATOR</Link>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse ms-5" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <Link to={'/home'} class="nav-link fw-bolder   text-success " aria-current="page" href="#">Home</Link>
-        </li>
-        <li class="nav-item">
-          <Link to={'/dashboard'} class="nav-link text-light " href="#">Dashboard</Link>
-        </li>
-        <li class="nav-item">
-          
-        </li>
-      </ul>
-      <div className='ms-3 mt-lg-0  mt-md-2  mt-sm-2'>
-        <button onClick={handleLogOut} className='btn  btn-danger text-light'>Logout<i class="fa-solid fa-arrow-right-from-bracket ms-2"></i></button>
-        </div>
-    </div>
-  </div>
-</nav>
-      <div className="row">
+    <Header/>
+    <div  style={{backgroundColor:'#0E0F0F',height:'80vh'}} className=' w-100'>
+     
+      <div  className="row d-flex align-items-center  justify-content-center ">
 
-        <div className="col-lg-6 ">
-          <div  style={{height:'400px'}}  className='bg-black w-100 mt-5 ms-5 rounded  shadow '>
+        <div className="col-lg-5">
+          <div  style={{height:'auto'}}  className='bg-black w-100 mt-5 rounded  shadow '>
              <div className="row">
               <div className="col-lg-1"></div>
               <div className="col-lg-4 d-flex  justify-content-center  align-items-center ">
               <label className='text-center me-5'> 
-         <input style={{display:'none'}} type='file' />
-         <img className='rounded-circle' width={'150px'} height={'150px'} src='https://www.asterhospitals.in/sites/default/files/2023-05/dr-srinivas-kowshik-malluri-pediatrician-and-neonatologist-in-kerala.jpg' alt="upload image" />
+         <input style={{display:'none'}} type='file' onChange={e=>setUserData({...userData,profileImage:e.target.files[0]})} />
+         {existingImage==""?<img className='rounded-circle' width={'200px'} height={'200px'} src={preview?preview:uploadProfile} alt="upload image" />:<img className='rounded-circle' width={'200px'} height={'200px'} src={preview?preview: `${SERVER_URL}/uploads/${existingImage}`} alt="upload image" />}
          <h6 className='text-center text-white mt-1'>Change Profile Photo</h6>
          </label>
               </div>
               <div className="col-lg-6">
                 <div style={{height:'320px'}} className='bg- shadow rounded w-100 mt-5 me-5 text-light'>
+                <div className='d-flex justify-content-end '><button  onClick={edit} className='btn btn-light ms-5'><i class="fa-solid fa-pen-to-square"></i>Edit</button></div>
+
                  <div style={{height:'50px'}} className=''>
                     <label htmlFor="username">
                      Username<span className='ms-1'> :</span>
                     </label>
-                    <input style={{pointerEvents:'none',height:'40px'}} className=' ms-1  rounded bg-black border-success  border-0  text-light fw-bold ' type="text"  placeholder='Vimal Kumar' />
-                    <button className='btn btn-light ms-1'><i class="fa-solid fa-pen-to-square"></i></button>
+                    <input
+                       style={{ pointerEvents: editData ? 'visible' : 'none', height: '40px' }}
+                          onChange={e => setUserData({ ...userData, username: e.target.value })}
+                         className='ms-1 rounded bg-black border-success border-0 text-light'
+                        type="text"  
+                       value={userData.username}
+                        />
               
                  </div>
                  
                  <hr className='mt-3' style={{color:'white',width:'40%'}}/>
                   <div className='mt-3'>
+                    
                     <label htmlFor="phone">
                      Phone   <span className='ms-1'> :</span>
                     </label>
-                    <input style={{pointerEvents:'none'}} className='ms-1  rounded bg-black border-black  border-0  text-light fw-bold  ' type="text"  placeholder='+91 7483946555' />
-                    <button className='btn btn-light ms-5'><i class="fa-solid fa-pen-to-square"></i></button>
+                    <input style={{ pointerEvents: editData ? 'visible' : 'none', height: '40px' }}  onChange={e=>setUserData({...userData,phone:e.target.value})} className='ms-1  rounded bg-black border-black  border-0  text-light  ' type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required value={userData.phone} />
                   </div>
                   <hr className='mt-3' style={{color:'white',width:'40%'}}/>
 
@@ -73,10 +147,11 @@ function Profile() {
                     <label htmlFor="Address">
                      Address   <span className='ms-1'> :</span>
                     </label>
-                    <input style={{pointerEvents:'none'}} className='ms-1  rounded bg-black border-black  border-0  text-light fw-bold  ' type="text"  placeholder='Lisa House Mankunn PO Kochi Kerala' />
-                    <button className='btn btn-light ms-4'><i class="fa-solid fa-pen-to-square"></i></button>
+                    <input style={{ pointerEvents: editData ? 'visible' : 'none', height: '40px' }}  onChange={e=>setUserData({...userData,location:e.target.value})} className='ms-1  rounded bg-black border-black  border-0  text-light ' type="text"  value={userData.location} />
                   </div>
-                  
+                  <div className='mt-3'>
+                    <button onClick={handleProfileUpdate} className='btn btn-success '>Update</button>
+                  </div>
                 </div>
               </div>
               <div className="col-lg-1"></div>
@@ -87,15 +162,20 @@ function Profile() {
         <div className="col-lg-3  ">
           <h5 className='text-light mt-3 ms-5'>My Properties</h5>
           <hr className='mt-3 ms-5' style={{color:'white',width:'30%'}}/>
-          <div className='bg-black w-auto h-auto me-5'>
+          <div style={{backgroundColor:'#0E0F0F'}}  className=' w-auto h-auto me-5'>
 
-              <MyProperties/>
+              {myProperty?.map((post)=>(<MyProperties post={post}/>))}
           </div>
         </div>
         <div className="col-lg-1"></div>
       </div>
      
     </div>
+    <ToastContainer
+            autoClose={1000}
+            theme="dark"
+            position="top-center"
+          />
     <Footer/>
     </>
   )

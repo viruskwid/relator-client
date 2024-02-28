@@ -1,23 +1,56 @@
-import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useContext, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import './Auth.css'
-import { auth, provider } from '../firebase'
-import { signInWithPopup } from 'firebase/auth'
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import login from '../assets/login.png'
+import { loginAPI } from '../../Service/allAPIs'
+import { tokenAuthenticationContext } from '../Context API/TokenAuth';
 function Auth() {
-  const [value,setValue] = useState('')
- const handleClick =()=>{
-  signInWithPopup(auth,provider).then((data)=>{
-  setValue(data.user.email)
-  localStorage.setItem("email",data.user.email)
-  })
- }
- useEffect(()=>{
-  setValue(localStorage.getItem('email'))
- })
+ 
+  const navigate = useNavigate()
+  const {isAuthorised,setIsAuthorised} = useContext(tokenAuthenticationContext)
+
+  const [userData,setUserData]=useState({
+    username:"",
+    email:"",
+    password:""
+   }) 
+  const handleLogin = async(e)=>{
+    e.preventDefault()
+    const {  email, password } = userData;
+    if ( !email || !password) {
+      toast.warning("Please complete the form");
+    } else {
+      //toast.success("proceeded to api call")
+      try {
+        const result = await loginAPI(userData);
+        console.log(result);
+        if (result.status === 200) {
+          const email=result.data.existingUser.email
+          sessionStorage.setItem("username",result.data.existingUser.username)
+          sessionStorage.setItem("token", result.data.token)
+          sessionStorage.setItem("userDetails",JSON.stringify(result.data.existingUser))
+          setUserData({email: "", password: "" })
+          if(email=="admin123@gmail.com"){
+            navigate("/adhome")
+          }else{
+          navigate("/dashboard")
+          }
+          setIsAuthorised(true)
+        } else {
+          toast.warning(result.response.data)
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+  }
+  console.log(userData.username, userData.email, userData.password);
   return (
     <>
-    <div style={{height:'auto',overflowX:'hidden'}} className='w-auto bg-dark'>
+    <div style={{height:'100vh',overflowX:'hidden',backgroundColor:'#0E0F0F'}} className='w-auto '>
     <nav class="navbar navbar-expand-lg bg-black" data-bs-theme="dark">
   <div class="container">
   <Link to={'/'} className='text-decoration-none text-light fs-4 navbar-brand'> <i class="fa-solid fa-house-laptop me-2 fs-2"></i>R<span className='text-success fw-semibold '>E</span>LATOR</Link>
@@ -40,20 +73,15 @@ function Auth() {
 </nav>
 
 
-     <div style={{height:'100vh', width:'auto'}} className=' d-flex  justify-content-center '>
-           <div style={{width:'770px',height:'515px',boxShadow:'rgba(211, 211, 211, 1) 0px 5px 15px'}} className='row d-flex bg-black mt-5 ms-5 rounded'>
-            <div style={{height:'513px'}} className="col-lg-5 ">
-              <div style={{background:'url(https://img.freepik.com/premium-photo/futuristic-skyscraper-reflects-modern-city-life-steel-generated-by-ai_24640-88218.jpg)',height:'513px',backgroundRepeat:'none'}} className=' mt-0  rounded'>
-             <div className='me-5' >
-                 
-                
-             </div>
-              </div>
+     <div className=' d-flex  justify-content-center mt-1'>
+           <div style={{boxShadow:'rgba(211, 211, 211, 1) 0px 5px 15px'}} className='row d-flex bg-black   rounded '>
+            <div style={{height:'auto'}} className="col-lg ">
             </div>
-            <div   className="col-lg-6 ">
-            <form  className="form  rounded bg-black shadow ">
+            <div style={{height:'auto'}}    className="col-lg-10 d-flex flex-column  justify-content-center  align-items-center ">
+            <Link className='text-decoration-none text-light fs-4 navbar-brand mt-2'> <i class="fa-solid fa-house-laptop me-2 fs-2"></i>R<span className='text-success fw-semibold '>E</span>LATOR</Link>
+            <form  style={{height:'auto'}}  className="form  rounded shadow mt-3 bg-black ">
       <div  className="flex-column">
-        <label className='text-light fw-normal '>Email </label>
+        <label className='text-light fw-normal '>Email :</label>
       </div>
       <div className="inputForm">
         <svg height="20" viewBox="0 0 32 32" width="20" xmlns="http://www.w3.org/2000/svg">
@@ -61,20 +89,20 @@ function Auth() {
             <path d="m30.853 13.87a15 15 0 0 0 -29.729 4.082 15.1 15.1 0 0 0 12.876 12.918 15.6 15.6 0 0 0 2.016.13 14.85 14.85 0 0 0 7.715-2.145 1 1 0 1 0 -1.031-1.711 13.007 13.007 0 1 1 5.458-6.529 2.149 2.149 0 0 1 -4.158-.759v-10.856a1 1 0 0 0 -2 0v1.726a8 8 0 1 0 .2 10.325 4.135 4.135 0 0 0 7.83.274 15.2 15.2 0 0 0 .823-7.455zm-14.853 8.13a6 6 0 1 1 6-6 6.006 6.006 0 0 1 -6 6z"></path>
           </g>
         </svg>
-        <input type="text" className="input bg-black text-light" placeholder="Enter your Email" />
+        <input type="text" className="input bg-black text-light" placeholder="Enter your Email" onChange={(e)=>setUserData({...userData,email:e.target.value})}  value={userData.email}/>
       </div>
 
       <div className="flex-column">
-        <label className='text-light fw-normal '>Password </label>
+        <label className='text-light fw-normal '>Password :</label>
       </div>
       <div className="inputForm text-light">
         <svg   height="20" viewBox="-64 0 512 512" width="20" xmlns="http://www.w3.org/2000/svg">
           <path d="m336 512h-288c-26.453125 0-48-21.523438-48-48v-224c0-26.476562 21.546875-48 48-48h288c26.453125 0 48 21.523438 48 48v224c0 26.476562-21.546875 48-48 48zm-288-288c-8.8125 0-16 7.167969-16 16v224c0 8.832031 7.1875 16 16 16h288c8.8125 0 16-7.167969 16-16v-224c0-8.832031-7.1875-16-16-16zm0 0"></path>
           <path d="m304 224c-8.832031 0-16-7.167969-16-16v-80c0-52.929688-43.070312-96-96-96s-96 43.070312-96 96v80c0 8.832031-7.167969 16-16 16s-16-7.167969-16-16v-80c0-70.59375 57.40625-128 128-128s128 57.40625 128 128v80c0 8.832031-7.167969 16-16 16zm0 0"></path>
         </svg>
-        <input type="password" className="input text-light bg-black" placeholder="Enter your Password" />
-        <svg viewBox="0 0 576 512" height="1em" xmlns="http://www.w3.org/2000/svg">
-          <path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"></path>
+        <input type="password" className="input text-light bg-black" placeholder="Enter your Password"  onChange={(e)=>setUserData({...userData,password:e.target.value})} value={userData.password}/>
+        <svg className='text-light' viewBox="0 0 576 512" height="1em" xmlns="http://www.w3.org/2000/svg">
+          <path className='text-light' d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"></path>
         </svg>
       </div>
       <div className="flex-row">
@@ -83,14 +111,9 @@ function Auth() {
           <label className='text-light ms-2'>Remember me </label>
         </div>
       </div>
-      <Link to={'/dashboard'} className="button-submit text-light btn btn-black pt-2 fw-semibold  text-center">Sign In</Link>
-      <p className="p text-light">
-        Don't have an account? <Link to={'/register'} className="span text-light">Sign Up</Link>
-      </p>
-      <p className="p line text-light">Or With</p>
-
-      <div className="flex-row d-flex  justify-content-center  align-items-center ">
-        {value?<Dashboard/>:<button onClick={handleClick} className="btn1 google shadow text-black">
+      <button onClick={handleLogin} className="button-submit text-light btn btn-black pt-2 fw-semibold  text-center">Sign In</button>
+      <div className="flex-row d-flex  justify-content-center  align-items-center mb-5 flex-column  ">
+        <button  className="btn1 google shadow text-black">
           <svg version="1.1" width="20" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" style={{ enableBackground: 'new 0 0 512 512' }} xmlSpace="preserve">
             <path style={{ fill: '#FBBB00' }} d="M113.47,309.408L95.648,375.94l-65.139,1.378C11.042,341.211,0,299.9,0,256
         c0-42.451,10.324-82.483,28.624-117.732h0.014l57.992,10.632l25.404,57.644c-5.317,15.501-8.215,32.141-8.215,49.456
@@ -106,16 +129,24 @@ function Auth() {
         C318.115,0,375.068,22.126,419.404,58.936z"></path>
           </svg>
          Sign in with Google
-        </button>}
-      </div>
+        </button>
+        <p className="p text-light">
+        Don't have an account? <Link to={'/register'} className="span text-light">Sign Up</Link>
+      </p>
+      </div> 
     </form>
 
             </div>
-            <div className="col-lg-1"></div>
-
+            <div className="col-lg"></div>
+               
            </div>
      </div>
     </div>
+    <ToastContainer
+            autoClose={4000}
+            theme="dark"
+            position="top-center"
+          />
     </>
   )
 }
